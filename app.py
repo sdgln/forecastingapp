@@ -166,7 +166,7 @@ plt.show()
 
 # Auto ARIMA
 #!pip install numpy==1.24.3 pmdarima --force-reinstall --no-cache-dir
-import pmdarima as pm
+#import pmdarima as pm
 auto_model = pm.auto_arima(
     monthly_sales_cleaned,
     seasonal=True,
