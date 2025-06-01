@@ -1,9 +1,10 @@
+numpy==1.24.3
 pandas
-numpy
-matplotlib
 scikit-learn
+matplotlib
 statsmodels
-pmdarima
-streamlit
-kagglehub
 joblib
+kagglehub
+streamlit
+pmdarima
+
