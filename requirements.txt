@@ -1,0 +1,9 @@
+pandas
+numpy
+matplotlib
+scikit-learn
+statsmodels
+pmdarima
+streamlit
+kagglehub
+joblib
