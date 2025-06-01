@@ -18,6 +18,12 @@ st.title("📊 Sales Forecasting Interface")
 
 uploaded_file = st.file_uploader("Upload your sales CSV file with 'Order Date' and 'Sales' columns")
 
+def calculate_metrics(y_true, y_pred):
+    mae = mean_absolute_error(y_true, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+    mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+    return mae, rmse, mape
+
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
     df['Order Date'] = pd.to_datetime(df['Order Date'], dayfirst=True)
@@ -51,6 +57,20 @@ if uploaded_file:
     ax.grid()
     st.pyplot(fig)
 
+    # Evaluate MA(3)
+    y_true = cleaned[3:]
+    y_pred_ma3 = ma3[3:]
+    mae, rmse, mape = calculate_metrics(y_true, y_pred_ma3)
+    st.write("**MA(3) Performance**")
+    st.write(f"MAE: {mae:.2f}, RMSE: {rmse:.2f}, MAPE: {mape:.2f}%")
+
+    # Evaluate MA(6)
+    y_true = cleaned[6:]
+    y_pred_ma6 = ma6[6:]
+    mae, rmse, mape = calculate_metrics(y_true, y_pred_ma6)
+    st.write("**MA(6) Performance**")
+    st.write(f"MAE: {mae:.2f}, RMSE: {rmse:.2f}, MAPE: {mape:.2f}%")
+
     # SES
     ses_model = SimpleExpSmoothing(cleaned).fit(smoothing_level=0.2, optimized=False)
     ses_forecast = ses_model.fittedvalues
@@ -61,6 +81,13 @@ if uploaded_file:
     ax.legend()
     ax.grid()
     st.pyplot(fig)
+
+    # SES Metrics
+    y_true = cleaned[1:]
+    y_pred_ses = ses_forecast[1:]
+    mae, rmse, mape = calculate_metrics(y_true, y_pred_ses)
+    st.write("**SES Performance**")
+    st.write(f"MAE: {mae:.2f}, RMSE: {rmse:.2f}, MAPE: {mape:.2f}%")
 
     # Holt-Winters
     hw_model = ExponentialSmoothing(cleaned, trend="add", seasonal="add", seasonal_periods=12).fit()
@@ -73,6 +100,12 @@ if uploaded_file:
     ax.grid()
     st.pyplot(fig)
 
+    y_true = cleaned[12:]
+    y_pred_hw = hw_forecast[12:]
+    mae, rmse, mape = calculate_metrics(y_true, y_pred_hw)
+    st.write("**Holt-Winters Performance**")
+    st.write(f"MAE: {mae:.2f}, RMSE: {rmse:.2f}, MAPE: {mape:.2f}%")
+
     # Machine Learning: Random Forest
     df_ml = cleaned.to_frame()
     df_ml['lag1'] = df_ml['Sales'].shift(1)
@@ -81,7 +114,7 @@ if uploaded_file:
     X = df_ml[['lag1', 'lag2']]
     y = df_ml['Sales']
     X_train, X_test = X.iloc[:int(0.8*len(X))], X.iloc[int(0.8*len(X)):]
-    y_train, y_test = y.iloc[:int(0.8*len(X))], y.iloc[int(0.8*len(X)):]
+    y_train, y_test = y.iloc[:int(0.8*len(X))], y.iloc[int(0.8*len(X)):] 
 
     pipeline = Pipeline([
         ('scaler', StandardScaler()),
@@ -105,11 +138,11 @@ if uploaded_file:
     ax.grid()
     st.pyplot(fig)
 
-    # Metrics
     st.subheader("📉 Random Forest Model Performance")
-    st.write(f"**MAE:** {mean_absolute_error(y_test, y_pred):.2f}")
-    st.write(f"**RMSE:** {np.sqrt(mean_squared_error(y_test, y_pred)):.2f}")
-    st.write(f"**R²:** {r2_score(y_test, y_pred):.2f}")
+    mae, rmse, mape = calculate_metrics(y_test, y_pred)
+    st.write(f"MAE: {mae:.2f}")
+    st.write(f"RMSE: {rmse:.2f}")
+    st.write(f"MAPE: {mape:.2f}%")
 else:
     st.info("📂 Please upload a CSV file with 'Order Date' and 'Sales' columns.")
 
